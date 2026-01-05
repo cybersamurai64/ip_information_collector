@@ -2,10 +2,6 @@ import requests
 import os
 
 def get_greynoise_v3_details(ip):
-    """
-    Részletes IP lekérdezés a GreyNoise v3 API segítségével.
-    Visszaadja a besorolást, az azonosított támadót, tag-eket és VPN/Tor adatokat.
-    """
     api_key = os.getenv("GREYNOISE_API_KEY")
     if not api_key:
         return {"error": "Missing GREYNOISE_API_KEY from .env file!"}
@@ -23,7 +19,6 @@ def get_greynoise_v3_details(ip):
             data = response.json()
             extraction = {}
 
-            # 1. Business Service Intelligence (Üzleti adatok)
             biz = data.get('business_service_intelligence', {})
             if biz.get('found'):
                 extraction["business_name"] = biz.get('name', 'N/A')
@@ -31,7 +26,6 @@ def get_greynoise_v3_details(ip):
                 extraction["trust_level"] = biz.get('trust_level', 'N/A')
                 extraction["description"] = biz.get('description', 'N/A')
 
-            # 2. Internet Scanner Intelligence (Scanner/Támadó adatok)
             scan = data.get('internet_scanner_intelligence', {})
             extraction["seen_as_scanner"] = "YES" if scan.get('found') else "NO"
 
@@ -43,11 +37,9 @@ def get_greynoise_v3_details(ip):
                 extraction["bot"] = scan.get('bot')
                 extraction["spoofable"] = scan.get('spoofable')
 
-                # Tag-ek kinyerése (pl. Mirai, Shodan)
                 tags = scan.get('tags', [])
                 extraction["tags"] = ", ".join([t.get('name') for t in tags]) if tags else "None"
 
-                # CVE-k kinyerése
                 cves = scan.get('cves', [])
                 extraction["known_cves"] = ", ".join(cves) if cves else "None"
 

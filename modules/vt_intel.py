@@ -16,12 +16,10 @@ def get_vt_score(ip):
             json_data = response.json()
             attr = json_data.get('data', {}).get('attributes', {})
 
-            # 1. Időbélyegek konvertálása (Unix timestamp -> Olvasható dátum)
             def format_date(ts):
                 if not ts: return "N/A"
                 return datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
 
-            # 2. Statisztikák kinyerése
             stats = attr.get('last_analysis_stats', {})
             malicious_count = stats.get('malicious', 0)
             total_engines = sum(stats.values())
@@ -32,10 +30,9 @@ def get_vt_score(ip):
 
             tags = attr.get('tags', [])
 
-            # 3. Kategóriák összesítése (last_analysis_results-ból)
             results = attr.get('last_analysis_results', {})
             category_summary = {}
-            specific_results = {}  # Szótár a számláláshoz
+            specific_results = {}
 
             for engine, data in results.items():
                 cat = data.get('category', 'unknown')
@@ -43,11 +40,9 @@ def get_vt_score(ip):
 
                 category_summary[cat] = category_summary.get(cat, 0) + 1
 
-                # Csak a kártékony/gyanús találatok konkrét eredményét gyűjtjük és számoljuk
                 if cat in ['malicious', 'suspicious'] and res:
                     specific_results[res] = specific_results.get(res, 0) + 1
 
-            # Adatok összeállítása az extraction dict-be
             extraction = {
                 "blacklist_count": f"[bold red]{malicious_count}[/bold red] / {total_engines} engines",
                 "detected_threats": ", ".join([f"{k} ({v})" for k, v in specific_results.items()]) if specific_results else "None",
