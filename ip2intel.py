@@ -17,7 +17,7 @@ def print_result(title, data):
     console.print(f"\n[bold yellow]=== {title} ===[/bold yellow]")
 
     if "error" in data:
-        console.print(f"[bold red]HIBA:[/bold red] {data['error']}")
+        console.print(f"[bold red]ERROR:[/bold red] {data['error']}")
         return
 
     for key, value in data.items():
@@ -52,7 +52,6 @@ def print_result(title, data):
 
         # 7. Trust Level (GreyNoise)
         elif key == "trust_level":
-            # 1 = Megbízható (Zöld), 2 = Kevésbé megbízható (Sárga), egyéb = Fehér
             color = "bold green" if value == "1" else "bold yellow" if value == "2" else "white"
             level_text = "1 (Very High)" if value == "1" else "2 (High)" if value == "2" else value
             console.print(f"[cyan]{clean_key}:[/cyan] [{color}]{level_text}[/{color}]")
