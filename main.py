@@ -7,6 +7,7 @@ from modules.abusedb_info import get_abuse_score
 from modules.dns_info import get_dns_details
 from modules.vt_intel import get_vt_score
 from modules.proxy_checker import get_proxy_details
+from modules.greynoise_intel import get_greynoise_v3_details
 
 
 load_dotenv()
@@ -21,8 +22,8 @@ def print_result(title, data):
 
     for key, value in data.items():
         clean_key = key.replace("_", " ").title()
-
         is_positive = value in [True, "YES", "yes", "True"]
+        val_str = str(value).lower()
 
         # 1. Score
         if key == "score":
@@ -49,6 +50,24 @@ def print_result(title, data):
             status = "[bold green]YES[/bold green]" if is_positive else "[bold red]NO[/bold red]"
             console.print(f"[cyan]{clean_key}:[/cyan] {status}")
 
+        #pksmgewoskvmwrokvmerwosikvmerokivmerovmo
+        elif key == "trust_level":
+            # 1 = Megbízható (Zöld), 2 = Kevésbé megbízható (Sárga), egyéb = Fehér
+            color = "bold green" if value == "1" else "bold yellow" if value == "2" else "white"
+            level_text = "1 (Very High)" if value == "1" else "2 (High)" if value == "2" else value
+            console.print(f"[cyan]{clean_key}:[/cyan] [{color}]{level_text}[/{color}]")
+
+        elif key == "classification":
+            if "malicious" in val_str:
+                color = "bold red"
+            elif "suspicious" in val_str:
+                color = "bold yellow"
+            elif "benign" in val_str:
+                color = "bold green"
+            else:
+                color = "white"
+            console.print(f"[cyan]{clean_key}:[/cyan] [{color}]{value}[/{color}]")
+
         else:
             console.print(f"[cyan]{clean_key}:[/cyan] [white]{value}[/white]")
 
@@ -69,6 +88,8 @@ def main():
         print_result("VirusTotal Information", vt_data)
         proxy_data = get_proxy_details(target_ip)
         print_result("Proxy Information", proxy_data)
+        greynoise_data = get_greynoise_v3_details(target_ip)
+        print_result("GreyNoise Information", greynoise_data)
 
 
 if __name__ == "__main__":
