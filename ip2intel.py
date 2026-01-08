@@ -1,6 +1,7 @@
 import argparse
 from dotenv import load_dotenv
 from rich.console import Console
+from rich.table import Table
 
 from modules.network_info import get_network_details
 from modules.abusedb_info import get_abuse_score
@@ -17,44 +18,53 @@ def print_result(title, data):
     console.print(f"\n[bold yellow]=== {title} ===[/bold yellow]")
 
     if "error" in data:
-        console.print(f"[bold red]ERROR:[/bold red] {data['error']}")
+        console.print(f" [bold red]![/bold red] [bold white]Error        :[/bold white] [red]{data['error']}[/red]")
         return
 
+    table = Table(show_header=False, box=None, padding=(0, 2))
+    table.add_column("Key", style="cyan", justify="right", no_wrap=True)
+    table.add_column("Value")
+
     for key, value in data.items():
-        clean_key = key.replace("_", " ").title()
-        is_positive = value in [True, "YES", "yes", "True"]
+        clean_key = f"{key.replace('_', ' ').title()}:"
+        is_positive = value in [True, "YES", "yes", "True", "true"]
         val_str = str(value).lower()
+
+        formatted_value = f"[white]{value}[/white]"
 
         # 1. Score
         if key == "score":
             color = "red" if value > 50 else "yellow" if value > 0 else "green"
-            console.print(f"[cyan]{clean_key}:[/cyan] [{color}]{value}%[/{color}]")
+            formatted_value = f"[{color}]{value}%[/{color}]"
 
         # 2. Whitelist
         elif key == "is_whitelisted":
             status = "[bold green]YES[/bold green]" if is_positive else "[white]NO[/white]"
-            console.print(f"[cyan]{clean_key}:[/cyan] {status}")
+            formatted_value = status
 
         # 3. Etc
         elif key in ["is_tor_node", "proxy", "port_forwarding"]:
             status = "[bold red]YES[/bold red]" if is_positive else "[bold green]NO[/bold green]"
-            console.print(f"[cyan]{clean_key}:[/cyan] {status}")
+            formatted_value = status
 
         # 5. Reputation
         elif key == "reputation_points":
-            color = "bold red" if int(value) < 0 else "bold green"
-            console.print(f"[cyan]{clean_key}:[/cyan] [{color}]{value}[/{color}]")
+            try:
+                color = "bold red" if int(value) < 0 else "bold green"
+                formatted_value = f"[{color}]{value}[/{color}]"
+            except (ValueError, TypeError):
+                formatted_value = f"[white]{value}[/white]"
 
         # 6. DNS
         elif key == "fcrdns_match":
             status = "[bold green]YES[/bold green]" if is_positive else "[bold red]NO[/bold red]"
-            console.print(f"[cyan]{clean_key}:[/cyan] {status}")
+            formatted_value = status
 
         # 7. Trust Level (GreyNoise)
         elif key == "trust_level":
             color = "bold green" if value == "1" else "bold yellow" if value == "2" else "white"
             level_text = "1 (Very High)" if value == "1" else "2 (High)" if value == "2" else value
-            console.print(f"[cyan]{clean_key}:[/cyan] [{color}]{level_text}[/{color}]")
+            formatted_value = f"[{color}]{level_text}[/{color}]"
 
         # 8. Classification (GreyNoise)
         elif key == "classification":
@@ -66,10 +76,11 @@ def print_result(title, data):
                 color = "bold green"
             else:
                 color = "white"
-            console.print(f"[cyan]{clean_key}:[/cyan] [{color}]{value}[/{color}]")
+            formatted_value = f"[{color}]{value}[/{color}]"
 
-        else:
-            console.print(f"[cyan]{clean_key}:[/cyan] [white]{value}[/white]")
+        table.add_row(clean_key, formatted_value)
+
+    console.print(table)
 
 def main():
     parser = argparse.ArgumentParser(description="IP Enrichment Tool")
